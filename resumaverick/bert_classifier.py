@@ -76,7 +76,7 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
     training_args = TrainingArguments(
                         output_dir="./results",
                         learning_rate=1e-5,
-                        num_train_epochs=20,
+                        num_train_epochs=50,
                         per_device_train_batch_size=32,
                         per_device_eval_batch_size=8,
                         warmup_steps=10,
@@ -119,10 +119,21 @@ if __name__ == "__main__":
     num_labels = len(classes)
     # Update the model's classification head and config to match the label count
     hidden_size = getattr(model.config, "hidden_size", model.config.dim)
-    model.classifier = torch.nn.Linear(hidden_size, num_labels)
+  
+
     # Sync config and model attributes for number of labels
     model.config.num_labels = num_labels
     model.num_labels = num_labels
+    mlp = torch.nn.Sequential(
+        torch.nn.Linear(hidden_size, hidden_size),
+        torch.nn.ReLU(),
+        torch.nn.Linear(hidden_size, hidden_size),
+        torch.nn.ReLU(),
+        torch.nn.Linear(hidden_size, num_labels),
+    )
+    print(f"Classifier before: {model.classifier}, weight shape: {model.classifier.weight.shape}")
+    model.classifier = mlp
+    print(f"Classifier after: {model.classifier}")
     model.config.id2label = id2label
     model.config.label2id = label2id
     # Reset problem type to ensure correct loss computation

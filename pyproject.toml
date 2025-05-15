@@ -15,6 +15,7 @@ evaluate = "^0.4.3"
 scikit-learn = "^1.6.1"
 accelerate = "^1.7.0"
 black = "^25.1.0"
+ipython = "^9.2.0"
 
 
 [build-system]
