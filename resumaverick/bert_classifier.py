@@ -75,8 +75,9 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
 
     training_args = TrainingArguments(
                         output_dir="./results",
+                        optim="adamw_torch",
                         learning_rate=1e-5,
-                        num_train_epochs=50,
+                        num_train_epochs=13,
                         per_device_train_batch_size=32,
                         per_device_eval_batch_size=8,
                         warmup_steps=10,
@@ -119,7 +120,6 @@ if __name__ == "__main__":
     num_labels = len(classes)
     # Update the model's classification head and config to match the label count
     hidden_size = getattr(model.config, "hidden_size", model.config.dim)
-  
 
     # Sync config and model attributes for number of labels
     model.config.num_labels = num_labels
@@ -138,20 +138,13 @@ if __name__ == "__main__":
     model.config.label2id = label2id
     # Reset problem type to ensure correct loss computation
     model.config.problem_type = None
-    train_X_Val, test_X, train_y_Val, test_y = train_test_split(resume_df_X, resume_df_y, test_size=0.2, random_state=42)
-    train_X, val_X, train_y, val_y = train_test_split(train_X_Val, train_y_Val, test_size=0.2, random_state=42)
+    X_Train_Val, X_Test, y_Train_Val, y_Test = train_test_split(resume_df_X, resume_df_y, test_size=0.2, stratify=resume_df_y, random_state=42)
+    X_Train, X_Val, y_Train, y_Val = train_test_split(X_Train_Val, y_Train_Val, test_size=0.2, stratify=y_Train_Val, random_state=42)
 
-    # print(f"Train X: {train_y.apply(lambda x: type(x)).unique()}")
-    # quit()
-    # print(f"Train y: {train_y.head()}")
-    # print(f"Val X: {val_X.head()}")
-    # print(f"Val y: {val_y.head()}")
-    # print(f"Test X: {test_X.head()}")
-    # print(f"Test y: {test_y.head()}")
-    train_dataset, eval_dataset = prepare_data(train_X, train_y, val_X, val_y)
+    train_dataset, eval_dataset = prepare_data(X_Train, y_Train, X_Val, y_Val)
     finetuned_model = finetune_bert_model(model, train_dataset, eval_dataset)
     # Prepare the test dataset
-    test_dataset = Dataset.from_dict({"text": test_X, "label": test_y})
+    test_dataset = Dataset.from_dict({"text": X_Test, "label": y_Test})
     test_dataset = test_dataset.map(preprocess_function, batched=True)
 
 
