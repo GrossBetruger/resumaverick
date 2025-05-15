@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "resumaverick"
+version = "0.1.0"
+description = ""
+authors = ["GrossBetruger <koriatoren@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+pandas = "^2.2.3"
+transformers = "^4.51.3"
+torch = "^2.7.0"
+datasets = "^3.6.0"
+evaluate = "^0.4.3"
+scikit-learn = "^1.6.1"
+accelerate = "^1.7.0"
+black = "^25.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
