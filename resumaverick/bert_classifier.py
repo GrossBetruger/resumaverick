@@ -8,7 +8,7 @@ from transformers import Trainer, TrainingArguments
 from evaluate import load as load_metric
 from sklearn.model_selection import train_test_split
 from pathlib import Path
-from augmentation import apply_multiple_augmentations, synonym_replace, back_translate
+from augmentation import apply_multiple_augmentations, synonym_replace, back_translate, shuffle_summary
 from tqdm import tqdm
 
 tqdm.pandas()
@@ -79,7 +79,7 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
                         output_dir="./results",
                         optim="adamw_torch",
                         learning_rate=1e-5,
-                        num_train_epochs=20,
+                        num_train_epochs=24,
                         per_device_train_batch_size=32,
                         per_device_eval_batch_size=8,
                         warmup_steps=10,
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     resume_csv_path = Path(__file__).parent.parent / "data" / "Resume.csv"
     resume_df = pd.read_csv(resume_csv_path)
     print(f'size of original df: {len(resume_df)}')
-    resume_df = apply_multiple_augmentations(resume_df, "Resume_str", "Category", [synonym_replace, back_translate], ratios=[1, 0.02])
+    resume_df = apply_multiple_augmentations(resume_df, "Resume_str", "Category", [shuffle_summary, synonym_replace, back_translate], ratios=[1, 1, 0.001])
     print(f'size of augmented df: {len(resume_df)}')
     # Map string labels to integer IDs
     classes = sorted(resume_df["Category"].unique())

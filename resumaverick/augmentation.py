@@ -1,3 +1,5 @@
+import re
+from typing import Optional
 import spacy
 from nltk.corpus import wordnet
 from transformers import MarianMTModel, MarianTokenizer
@@ -83,7 +85,7 @@ def apply_multiple_augmentations(df: pd.DataFrame, x_col: str, y_col: str, augme
     augmented_dfs = []
     for i, augmentation in enumerate(augmentations):
         ratio = ratios[i] if ratios else 1
-        if ratio > 1:
+        if ratio < 1:
             sample = df.sample(frac=ratio, random_state=42)
         else:
             sample = df
@@ -94,6 +96,29 @@ def apply_multiple_augmentations(df: pd.DataFrame, x_col: str, y_col: str, augme
         aug_df = pd.DataFrame({x_col: aug_x, y_col: aug_y})
         augmented_dfs.append(aug_df)
     return pd.concat([df] + augmented_dfs)
+
+
+def extract_summary(text) -> Optional[str]:
+    found = re.findall("Summary\\W(.+)Experience", text)
+    if found:
+        return found[0]
+    return None
+
+
+def sentence_shuffle(text, seed=42) -> str:
+    doc = nlp(text)
+    sentences = [sent.text for sent in doc.sents]
+    random.seed(seed)     
+    random.shuffle(sentences)
+    return " ".join(sentences)
+
+
+def shuffle_summary(text, seed=42) -> str:
+    summary = extract_summary(text)
+    if summary:
+        shuffled_summary = sentence_shuffle(summary, seed=seed)
+        return text.replace(summary, " " + shuffled_summary)
+    return text
 
 
 if __name__ == "__main__":
