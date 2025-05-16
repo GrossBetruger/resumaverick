@@ -1,6 +1,8 @@
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import pandas as pd
 import torch
+import numpy as np
+
 from utils import load_resume_dataset
 
 from datasets import Dataset
@@ -8,8 +10,10 @@ from transformers import Trainer, TrainingArguments
 from evaluate import load as load_metric
 from sklearn.model_selection import train_test_split
 from pathlib import Path
-import numpy as np
+from augmentation import synonym_replace
+from tqdm import tqdm
 
+tqdm.pandas()
 
 
 def load_bert_model(model_name: str):
@@ -112,6 +116,10 @@ if __name__ == "__main__":
     # Text inputs and original string labels
     resume_df_X = resume_df["Resume_str"]
     resume_df_y_str = resume_df["Category"]
+    print(f'applying synonym augmentation to {len(resume_df_X)} resumes')
+    augmented_df_X = resume_df_X.progress_apply(synonym_replace)
+    resume_df_X = pd.concat([resume_df_X, augmented_df_X])
+    resume_df_y_str = pd.concat([resume_df_y_str, resume_df_y_str])
     # Map string labels to integer IDs
     classes = sorted(resume_df_y_str.unique())
     label2id = {label: idx for idx, label in enumerate(classes)}
