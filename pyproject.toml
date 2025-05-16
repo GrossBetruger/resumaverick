@@ -19,6 +19,8 @@ ipython = "^9.2.0"
 plotly = "^6.1.0"
 nltk = "^3.9.1"
 spacy = "^3.8.5"
+sentencepiece = "^0.2.0"
+sacremoses = "^0.1.1"
 
 
 [build-system]

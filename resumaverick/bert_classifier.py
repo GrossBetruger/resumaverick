@@ -10,7 +10,7 @@ from transformers import Trainer, TrainingArguments
 from evaluate import load as load_metric
 from sklearn.model_selection import train_test_split
 from pathlib import Path
-from augmentation import synonym_replace
+from augmentation import apply_multiple_augmentations, synonym_replace, back_translate
 from tqdm import tqdm
 
 tqdm.pandas()
@@ -113,18 +113,16 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
 if __name__ == "__main__":
     resume_csv_path = Path(__file__).parent.parent / "data" / "Resume.csv"
     resume_df = pd.read_csv(resume_csv_path)
-    # Text inputs and original string labels
-    resume_df_X = resume_df["Resume_str"]
-    resume_df_y_str = resume_df["Category"]
-    print(f'applying synonym augmentation to {len(resume_df_X)} resumes')
-    augmented_df_X = resume_df_X.progress_apply(synonym_replace)
-    resume_df_X = pd.concat([resume_df_X, augmented_df_X])
-    resume_df_y_str = pd.concat([resume_df_y_str, resume_df_y_str])
+    print(f'size of original df: {len(resume_df)}')
+    resume_df = apply_multiple_augmentations(resume_df, "Resume_str", "Category", [synonym_replace, back_translate], ratios=[1, 0.02])
+    print(f'size of augmented df: {len(resume_df)}')
     # Map string labels to integer IDs
-    classes = sorted(resume_df_y_str.unique())
+    classes = sorted(resume_df["Category"].unique())
     label2id = {label: idx for idx, label in enumerate(classes)}
     id2label = {idx: label for label, idx in label2id.items()}
-    resume_df_y = resume_df_y_str.map(label2id)
+    resume_df_y = resume_df["Category"].map(label2id)
+    resume_df_X = resume_df["Resume_str"]
+    
     num_labels = len(classes)
     # Update the model's classification head and config to match the label count
     hidden_size = getattr(model.config, "hidden_size", model.config.dim)
