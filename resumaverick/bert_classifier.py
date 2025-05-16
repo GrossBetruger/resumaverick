@@ -3,8 +3,6 @@ import pandas as pd
 import torch
 import numpy as np
 
-from utils import load_resume_dataset
-
 from datasets import Dataset
 from transformers import Trainer, TrainingArguments
 from evaluate import load as load_metric

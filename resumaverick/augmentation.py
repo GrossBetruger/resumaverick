@@ -5,9 +5,13 @@ import pandas as pd
 import random
 
 import nltk
+from tqdm import tqdm
 
-nltk.download('wordnet')
-nltk.download('omw-1.4')
+tqdm.pandas()
+# Download NLTK resources only when running as a script
+if __name__ == "__main__":
+    nltk.download('wordnet')
+    nltk.download('omw-1.4')
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -79,7 +83,10 @@ def apply_multiple_augmentations(df: pd.DataFrame, x_col: str, y_col: str, augme
     augmented_dfs = []
     for i, augmentation in enumerate(augmentations):
         ratio = ratios[i] if ratios else 1
-        sample = df.sample(frac=ratio, random_state=42)
+        if ratio > 1:
+            sample = df.sample(frac=ratio, random_state=42)
+        else:
+            sample = df
         if verbose:
             print(f'applying {augmentation.__name__} to {len(sample)} resumes')
         aug_x = sample[x_col].progress_apply(augmentation)
