@@ -10,8 +10,18 @@ from sklearn.model_selection import train_test_split
 from pathlib import Path
 from augmentation import apply_multiple_augmentations, synonym_replace, back_translate, shuffle_summary
 from tqdm import tqdm
+from transformers.trainer_callback import TrainerCallback
+
 
 tqdm.pandas()
+
+
+class PrintLRCallback(TrainerCallback):
+    def on_step_end(self, args, state, _control, **kwargs):
+        optimizer = kwargs['optimizer']
+        current_lr = optimizer.param_groups[0]['lr']
+        print(f"Step {state.global_step}: LR={current_lr:.8f}")
+
 
 
 def load_bert_model(model_name: str):
@@ -74,12 +84,14 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
     """
     Finetune the BERT model on the given training and validation data.
     """
-
+    num_epochs = 24
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
+                                                            T_max=num_epochs,
+                                                        )
     training_args = TrainingArguments(
                         output_dir="./results",
-                        optim="adamw_torch",
-                        learning_rate=1e-5,
-                        num_train_epochs=24,
+                        num_train_epochs=num_epochs,
                         per_device_train_batch_size=32,
                         per_device_eval_batch_size=8,
                         warmup_steps=10,
@@ -100,9 +112,11 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         compute_metrics=compute_metrics,
+        optimizers=(optimizer, scheduler),
+        callbacks=[PrintLRCallback()],
     )
-
     trainer.train()
+    
     Path("./models").mkdir(parents=True, exist_ok=True)
     trainer.save_model("./models/bert-classifier")
     return model
@@ -133,7 +147,8 @@ if __name__ == "__main__":
         torch.nn.Linear(hidden_size, num_labels),
     )
     print(f"Classifier before: {model.classifier}, weight shape: {model.classifier.weight.shape}")
-    model.classifier = mlp
+    # model.classifier = mlp
+    model.classifier = torch.nn.Linear(hidden_size, num_labels)
     print(f"Classifier after: {model.classifier}")
     model.config.id2label = id2label
     model.config.label2id = label2id
@@ -149,7 +164,7 @@ if __name__ == "__main__":
         "text",
         "label", 
         [shuffle_summary, synonym_replace, back_translate],
-        ratios=[0, 0, 0])
+        ratios=[0.0, 0.0, 0.0])
     X_Train = Xy_train_augmented["text"]
     y_Train = Xy_train_augmented["label"]
     print(f'size of augmented training df: {len(X_Train)}')
