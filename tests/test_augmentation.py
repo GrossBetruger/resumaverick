@@ -66,9 +66,20 @@ def test_apply_multiple_augmentations_with_ratios():
     # 2️⃣  …and that y matches the original mapping
     for x, y in grouped.apply(lambda arr: arr[0]).to_dict().items():
         assert y == "y" + x.lower()[0], f"y={y} does not match X: {x}"
-    
 
 
+def test_apply_multiple_augmentations_with_0_ratios():
+    X = pd.Series(["a", "B"])
+    y = pd.Series(["ya", "yb"])
+    df = pd.DataFrame({"X": X, "y": y})
+    def upper(x): return x.upper()
+    def lower(x): return x.lower()
+    new_df = aug.apply_multiple_augmentations(df=df, x_col="X", y_col="y", augmentations=[upper, lower], ratios=[1, 0.0], verbose=False)
+    assert len(new_df) == 4 # 2 + 2*1 + 2*0.0
+    assert list(new_df["X"]) == ["a", "B", "A", "B"]
+
+    no_aug_df = aug.apply_multiple_augmentations(df=df, x_col="X", y_col="y", augmentations=[upper, lower], ratios=[0.0, 0.0], verbose=False)
+    assert list(no_aug_df["X"]) == ["a", "B"]
 
 class DummyTokenizer:
     def __init__(self, src, tgt):

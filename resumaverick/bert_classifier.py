@@ -111,9 +111,6 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
 if __name__ == "__main__":
     resume_csv_path = Path(__file__).parent.parent / "data" / "Resume.csv"
     resume_df = pd.read_csv(resume_csv_path)
-    print(f'size of original df: {len(resume_df)}')
-    resume_df = apply_multiple_augmentations(resume_df, "Resume_str", "Category", [shuffle_summary, synonym_replace, back_translate], ratios=[1, 1, 0.001])
-    print(f'size of augmented df: {len(resume_df)}')
     # Map string labels to integer IDs
     classes = sorted(resume_df["Category"].unique())
     label2id = {label: idx for idx, label in enumerate(classes)}
@@ -144,6 +141,18 @@ if __name__ == "__main__":
     model.config.problem_type = None
     X_Train_Val, X_Test, y_Train_Val, y_Test = train_test_split(resume_df_X, resume_df_y, test_size=0.2, stratify=resume_df_y, random_state=42)
     X_Train, X_Val, y_Train, y_Val = train_test_split(X_Train_Val, y_Train_Val, test_size=0.2, stratify=y_Train_Val, random_state=42)
+
+    print(f'size of original training df: {len(X_Train)}')
+    Xy_train = pd.DataFrame({"text": X_Train, "label": y_Train})
+    Xy_train_augmented = apply_multiple_augmentations(
+        Xy_train,
+        "text",
+        "label", 
+        [shuffle_summary, synonym_replace, back_translate],
+        ratios=[0, 0, 0])
+    X_Train = Xy_train_augmented["text"]
+    y_Train = Xy_train_augmented["label"]
+    print(f'size of augmented training df: {len(X_Train)}')
 
     train_dataset, eval_dataset = prepare_data(X_Train, y_Train, X_Val, y_Val)
     finetuned_model = finetune_bert_model(model, train_dataset, eval_dataset)
