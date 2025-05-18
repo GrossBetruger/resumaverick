@@ -95,7 +95,7 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
                                                             T_max=num_epochs * steps_per_epoch
                                                         )
-    fp16 = True if device == "cuda" else False
+    fp16 = device.type == "cuda" # True if GPU, False if CPU
     training_args = TrainingArguments(
                         output_dir="./results",
                         fp16=fp16, # mixed precision, speedup on T4s and A100s
