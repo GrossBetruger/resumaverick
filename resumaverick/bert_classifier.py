@@ -89,14 +89,16 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
     # Move model to the target device (GPU if available)
     model.to(device)
     num_epochs = 24
+    batch_size = 32
+    steps_per_epoch = len(train_dataset) // batch_size
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
-                                                            T_max=num_epochs,
+                                                            T_max=num_epochs * steps_per_epoch
                                                         )
     training_args = TrainingArguments(
                         output_dir="./results",
                         num_train_epochs=num_epochs,
-                        per_device_train_batch_size=32,
+                        per_device_train_batch_size=batch_size,
                         per_device_eval_batch_size=8,
                         warmup_steps=10,
                         weight_decay=0.01,
