@@ -53,17 +53,15 @@ def synonym_replace(text, p=0.2):
     return spacy.tokens.doc.Doc(doc.vocab, words=new_tokens).text
 
 
-def load_model_and_tokenizer(src_lang, tgt_lang):
+def load_model_and_tokenizer(src_lang, tgt_lang, device: torch.device):
     model_name = f'Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}'
     tokenizer = MarianTokenizer.from_pretrained(model_name)
-    model = MarianMTModel.from_pretrained(model_name)
+    model = MarianMTModel.from_pretrained(model_name, torch_dtype=torch.bfloat16 if device.type == "cuda" else torch.float32)
     return tokenizer, model
 
-eng_to_fr_tokenizer, eng_to_fr_model = load_model_and_tokenizer('en', 'fr')
-fr_to_eng_tokenizer, fr_to_eng_model = load_model_and_tokenizer('fr', 'en')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-eng_to_fr_model.to(device)
-fr_to_eng_model.to(device)
+eng_to_fr_tokenizer, eng_to_fr_model = load_model_and_tokenizer('en', 'fr', device)
+fr_to_eng_tokenizer, fr_to_eng_model = load_model_and_tokenizer('fr', 'en', device)
 
 
 def translate(text, tokenizer, model):
