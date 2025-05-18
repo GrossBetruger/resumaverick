@@ -2,6 +2,7 @@ import re
 from typing import Optional
 import spacy
 from nltk.corpus import wordnet
+import torch
 from transformers import MarianMTModel, MarianTokenizer
 import pandas as pd
 import random
@@ -58,6 +59,13 @@ def load_model_and_tokenizer(src_lang, tgt_lang):
     model = MarianMTModel.from_pretrained(model_name)
     return tokenizer, model
 
+eng_to_fr_tokenizer, eng_to_fr_model = load_model_and_tokenizer('en', 'fr')
+fr_to_eng_tokenizer, fr_to_eng_model = load_model_and_tokenizer('fr', 'en')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+eng_to_fr_model.to(device)
+fr_to_eng_model.to(device)
+
+
 def translate(text, tokenizer, model):
     # Tokenize with truncation to avoid exceeding model's max position embeddings
     batch = tokenizer([
@@ -67,14 +75,16 @@ def translate(text, tokenizer, model):
     gen = model.generate(**batch)
     return tokenizer.decode(gen[0], skip_special_tokens=True)
 
-def back_translate(text, intermediate_lang='fr'):
+def _back_translate(text: str, lang_a_model: MarianMTModel, lang_b_model: MarianMTModel, lang_a_tokenizer: MarianTokenizer, lang_b_tokenizer: MarianTokenizer):
     # English to intermediate
-    tok_en_fr, mod_en_fr = load_model_and_tokenizer('en', intermediate_lang)
-    fr_text = translate(text, tok_en_fr, mod_en_fr)
+    fr_text = translate(text, lang_a_tokenizer, lang_a_model)
     # Intermediate back to English
-    tok_fr_en, mod_fr_en = load_model_and_tokenizer(intermediate_lang, 'en')
-    back_text = translate(fr_text, tok_fr_en, mod_fr_en)
+    back_text = translate(fr_text, lang_b_tokenizer, lang_b_model)
     return back_text
+
+
+def back_translate(text):
+    return _back_translate(text, eng_to_fr_model, fr_to_eng_model, eng_to_fr_tokenizer, fr_to_eng_tokenizer)
 
 
 def apply_multiple_augmentations(df: pd.DataFrame, x_col: str, y_col: str, augmentations: list[callable], verbose: bool = True, ratios: list[float] = None) -> tuple[pd.Series, pd.Series]:
