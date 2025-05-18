@@ -1,6 +1,8 @@
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import pandas as pd
 import torch
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 import numpy as np
 
 from datasets import Dataset
@@ -84,6 +86,8 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
     """
     Finetune the BERT model on the given training and validation data.
     """
+    # Move model to the target device (GPU if available)
+    model.to(device)
     num_epochs = 24
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
