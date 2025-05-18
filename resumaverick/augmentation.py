@@ -68,12 +68,17 @@ fr_to_eng_model.to(device)
 
 def translate(text, tokenizer, model):
     # Tokenize with truncation to avoid exceeding model's max position embeddings
-    batch = tokenizer([
-        text
-    ], return_tensors="pt", padding=True, truncation=True,
-        max_length=tokenizer.model_max_length)
+    # Tokenize input (creates CPU tensors)
+    batch = tokenizer([text], return_tensors="pt", padding=True, truncation=True,
+                      max_length=tokenizer.model_max_length)
+    # Move inputs to same device as model
+    model_device = next(model.parameters()).device
+    batch = {k: v.to(model_device) for k, v in batch.items()}
+    # Generate translation
     gen = model.generate(**batch)
-    return tokenizer.decode(gen[0], skip_special_tokens=True)
+    # Decode generated ids (move to CPU first)
+    tokens = gen[0].cpu()
+    return tokenizer.decode(tokens, skip_special_tokens=True)
 
 def _back_translate(text: str, lang_a_model: MarianMTModel, lang_b_model: MarianMTModel, lang_a_tokenizer: MarianTokenizer, lang_b_tokenizer: MarianTokenizer):
     # English to intermediate
