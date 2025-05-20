@@ -36,7 +36,7 @@ def load_bert_model(model_name: str):
     return tokenizer, model
 
 
-model_name = "distilbert-base-uncased" if device.type == "cuda" else "distilbert-base-uncased"
+model_name = "microsoft/roberta-base" if device.type == "cuda" else "distilbert-base-uncased"
 print(f'running on {device.type} choosing model: {model_name}')
 tokenizer, model = load_bert_model(model_name)
 
@@ -110,19 +110,8 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
     num_epochs = 24
     batch_size = 32
     steps_per_epoch = len(train_dataset) // batch_size
-    # decay, no_decay = [], []
-    # for n,p in model.named_parameters():
-    #     if p.ndim > 1 and "LayerNorm" not in n:
-    #         decay.append(p)
-    #     else:
-    #         no_decay.append(p)
-    
-    # parameters_for_optimizer = [
-    #     {"params": decay, "weight_decay": 0.01},
-    #     {"params": no_decay, "weight_decay": 0.0},
-    # ]   
     optimzer_model_params = create_parameters_for_optimzer_conf(model.named_parameters)
-    optimizer = torch.optim.AdamW(optimzer_model_params,  lr=1e-5)
+    optimizer = torch.optim.AdamW(optimzer_model_params,  lr="3e-5") #1e-5)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
                                                             T_max=num_epochs * steps_per_epoch
                                                         )
