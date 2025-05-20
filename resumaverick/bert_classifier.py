@@ -83,6 +83,21 @@ def compute_metrics(eval_pred):
     }
 
 
+def create_parameters_for_optimzer_conf(named_params):
+    decay, no_decay = [], []
+    for n, p in named_params():
+        if p.ndim > 1 and "LayerNorm" not in n:
+            decay.append(p)
+        else:
+            no_decay.append(p)
+    
+    parameters_for_optimizer = [
+        {"params": decay, "weight_decay": 0.01},  # apply decay only to W matrices (not to bias, norm etc)
+        {"params": no_decay, "weight_decay": 0.0}, 
+    ]   
+    return parameters_for_optimizer
+
+
 def finetune_bert_model(model: AutoModelForSequenceClassification,
                         train_dataset: Dataset,
                         eval_dataset: Dataset,
@@ -95,7 +110,19 @@ def finetune_bert_model(model: AutoModelForSequenceClassification,
     num_epochs = 24
     batch_size = 32
     steps_per_epoch = len(train_dataset) // batch_size
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
+    # decay, no_decay = [], []
+    # for n,p in model.named_parameters():
+    #     if p.ndim > 1 and "LayerNorm" not in n:
+    #         decay.append(p)
+    #     else:
+    #         no_decay.append(p)
+    
+    # parameters_for_optimizer = [
+    #     {"params": decay, "weight_decay": 0.01},
+    #     {"params": no_decay, "weight_decay": 0.0},
+    # ]   
+    optimzer_model_params = create_parameters_for_optimzer_conf(model.named_parameters)
+    optimizer = torch.optim.AdamW(optimzer_model_params,  lr=1e-5)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 
                                                             T_max=num_epochs * steps_per_epoch
                                                         )
