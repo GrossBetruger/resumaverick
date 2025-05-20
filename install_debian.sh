@@ -15,6 +15,7 @@ ORIGINAL_DIR=$(pwd)
 check_python12() {
     if command -v python3.12 >/dev/null 2>&1; then
         echo "Python 3.12 is already installed: $(python3.12 --version)"
+	poetry install
         exit 0
     else
         echo "Python 3.12 not found, proceeding to install..."
