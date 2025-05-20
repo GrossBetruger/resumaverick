@@ -34,7 +34,7 @@ def load_bert_model(model_name: str):
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
     return tokenizer, model
 
-tokenizer, model = load_bert_model("distilbert-base-uncased")
+tokenizer, model = load_bert_model("bert-base-uncased")
 
 
 def preprocess_function(examples: dict[str, list[str]]) -> dict[str, list[int]]:
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     
     num_labels = len(classes)
     # Update the model's classification head and config to match the label count
-    hidden_size = getattr(model.config, "hidden_size", model.config.dim)
+    hidden_size = model.config.hidden_size
 
     # Sync config and model attributes for number of labels
     model.config.num_labels = num_labels
