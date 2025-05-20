@@ -14,6 +14,7 @@ pip-wheel-metadata/
 .eggs/
 
 ## Unit test / coverage reports
+*/__pycache__/*
 .coverage
 .coverage.*
 .cache
