@@ -7,7 +7,6 @@ Resumaverick is a BERT-based resume classification tool that fine-tunes a pre-tr
 - [Installation](#installation)
 - [Usage](#usage)
   - [Training](#training)
-  - [Example: Parallel Processing](#example-parallel-processing)
 - [Data](#data)
 - [Testing](#testing)
 - [Contributing](#contributing)
