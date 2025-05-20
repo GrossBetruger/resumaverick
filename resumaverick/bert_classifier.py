@@ -36,7 +36,7 @@ def load_bert_model(model_name: str):
     return tokenizer, model
 
 
-model_name = "microsoft/roberta-base" if device.type == "cuda" else "distilbert-base-uncased"
+model_name = "microsoft/deberta-v3-base" if device.type == "cuda" else "distilbert-base-uncased"
 print(f'running on {device.type} choosing model: {model_name}')
 tokenizer, model = load_bert_model(model_name)
 
