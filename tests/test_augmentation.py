@@ -143,6 +143,10 @@ class DummyTokenizer:
 class DummyModel:
     def generate(self, **batch):
         return batch["input_ids"]
+    def parameters(self):
+        # Provide a dummy parameter tensor to supply .device attribute
+        import torch
+        return iter([torch.tensor([0])])
 
 
 def test_translate_with_dummy():
@@ -153,11 +157,17 @@ def test_translate_with_dummy():
 
 
 def test_back_translate_with_dummy(monkeypatch):
-    def fake_load(src, tgt):
-        return DummyTokenizer(src, tgt), DummyModel()
-
-    monkeypatch.setattr(aug, "load_model_and_tokenizer", fake_load)
-    result = aug.back_translate("world", intermediate_lang="fr")
+    # Override global tokenizers and models for back_translate
+    tok_en_fr = DummyTokenizer("en", "fr")
+    mod_en_fr = DummyModel()
+    tok_fr_en = DummyTokenizer("fr", "en")
+    mod_fr_en = DummyModel()
+    monkeypatch.setattr(aug, "eng_to_fr_tokenizer", tok_en_fr)
+    monkeypatch.setattr(aug, "eng_to_fr_model", mod_en_fr)
+    monkeypatch.setattr(aug, "fr_to_eng_tokenizer", tok_fr_en)
+    monkeypatch.setattr(aug, "fr_to_eng_model", mod_fr_en)
+    # Call back_translate without extra args
+    result = aug.back_translate("world")
     assert result == "fr->en:en->fr:world"
 
 
