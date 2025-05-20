@@ -13,10 +13,11 @@ from tqdm import tqdm
 tqdm.pandas()
 # Download NLTK resources only when running as a script
 if __name__ == "__main__":
-    nltk.download('wordnet')
-    nltk.download('omw-1.4')
+    nltk.download("wordnet")
+    nltk.download("omw-1.4")
 
 nlp = spacy.load("en_core_web_sm")
+
 
 def get_synonyms(word, pos_tag):
     """Return a list of synonyms for a word, filtered by POS tag."""
@@ -24,7 +25,7 @@ def get_synonyms(word, pos_tag):
         "NOUN": wordnet.NOUN,
         "VERB": wordnet.VERB,
         "ADJ": wordnet.ADJ,
-        "ADV": wordnet.ADV
+        "ADV": wordnet.ADV,
     }
     wn_tag = tag_map.get(pos_tag, None)
     if wn_tag is None:
@@ -36,6 +37,7 @@ def get_synonyms(word, pos_tag):
             if lemma_name.lower() != word.lower():
                 synonyms.add(lemma_name)
     return list(synonyms)
+
 
 def synonym_replace(text, p=0.2):
     """Randomly replace words in the text with synonyms."""
@@ -54,21 +56,30 @@ def synonym_replace(text, p=0.2):
 
 
 def load_model_and_tokenizer(src_lang, tgt_lang, device: torch.device):
-    model_name = f'Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}'
+    model_name = f"Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}"
     tokenizer = MarianTokenizer.from_pretrained(model_name)
-    model = MarianMTModel.from_pretrained(model_name, torch_dtype=torch.bfloat16 if device.type == "cuda" else torch.float32)
+    model = MarianMTModel.from_pretrained(
+        model_name,
+        torch_dtype=torch.bfloat16 if device.type == "cuda" else torch.float32,
+    )
     return tokenizer, model
 
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-eng_to_fr_tokenizer, eng_to_fr_model = load_model_and_tokenizer('en', 'fr', device)
-fr_to_eng_tokenizer, fr_to_eng_model = load_model_and_tokenizer('fr', 'en', device)
+eng_to_fr_tokenizer, eng_to_fr_model = load_model_and_tokenizer("en", "fr", device)
+fr_to_eng_tokenizer, fr_to_eng_model = load_model_and_tokenizer("fr", "en", device)
 
 
 def translate(text, tokenizer, model):
     # Tokenize with truncation to avoid exceeding model's max position embeddings
     # Tokenize input (creates CPU tensors)
-    batch = tokenizer([text], return_tensors="pt", padding=True, truncation=True,
-                      max_length=tokenizer.model_max_length)
+    batch = tokenizer(
+        [text],
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=tokenizer.model_max_length,
+    )
     # Move inputs to same device as model
     model_device = next(model.parameters()).device
     batch = {k: v.to(model_device) for k, v in batch.items()}
@@ -78,7 +89,14 @@ def translate(text, tokenizer, model):
     tokens = gen[0].cpu()
     return tokenizer.decode(tokens, skip_special_tokens=True)
 
-def _back_translate(text: str, lang_a_model: MarianMTModel, lang_b_model: MarianMTModel, lang_a_tokenizer: MarianTokenizer, lang_b_tokenizer: MarianTokenizer):
+
+def _back_translate(
+    text: str,
+    lang_a_model: MarianMTModel,
+    lang_b_model: MarianMTModel,
+    lang_a_tokenizer: MarianTokenizer,
+    lang_b_tokenizer: MarianTokenizer,
+):
     # English to intermediate
     fr_text = translate(text, lang_a_tokenizer, lang_a_model)
     # Intermediate back to English
@@ -87,11 +105,19 @@ def _back_translate(text: str, lang_a_model: MarianMTModel, lang_b_model: Marian
 
 
 def back_translate(text):
-    return _back_translate(text, eng_to_fr_model, fr_to_eng_model, eng_to_fr_tokenizer, fr_to_eng_tokenizer)
+    return _back_translate(
+        text, eng_to_fr_model, fr_to_eng_model, eng_to_fr_tokenizer, fr_to_eng_tokenizer
+    )
 
 
-def apply_multiple_augmentations(df: pd.DataFrame, x_col: str, y_col: str, augmentations: list[callable], verbose: bool = True, ratios: list[float] = None) -> tuple[pd.Series, pd.Series]:
-
+def apply_multiple_augmentations(
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    augmentations: list[callable],
+    verbose: bool = True,
+    ratios: list[float] = None,
+) -> tuple[pd.Series, pd.Series]:
     """
     Apply multiple augmentations to the text.
     """
@@ -103,7 +129,7 @@ def apply_multiple_augmentations(df: pd.DataFrame, x_col: str, y_col: str, augme
         else:
             sample = df
         if verbose:
-            print(f'applying {augmentation.__name__} to {len(sample)} resumes')
+            print(f"applying {augmentation.__name__} to {len(sample)} resumes")
         aug_x = sample[x_col].progress_apply(augmentation)
         aug_y = sample[y_col]
         aug_df = pd.DataFrame({x_col: aug_x, y_col: aug_y})
@@ -121,7 +147,7 @@ def extract_summary(text) -> Optional[str]:
 def sentence_shuffle(text, seed=42) -> str:
     doc = nlp(text)
     sentences = [sent.text for sent in doc.sents]
-    random.seed(seed)     
+    random.seed(seed)
     random.shuffle(sentences)
     return " ".join(sentences)
 
@@ -143,4 +169,3 @@ if __name__ == "__main__":
     back_translated = back_translate(text)
     print("Original:        ", text)
     print("Back-translated: ", back_translated)
-
