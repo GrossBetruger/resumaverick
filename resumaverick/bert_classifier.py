@@ -8,7 +8,7 @@ from transformers import Trainer, TrainingArguments
 from evaluate import load as load_metric
 from sklearn.model_selection import train_test_split
 from pathlib import Path
-from augmentation import (
+from resumaverick.augmentation import (
     apply_multiple_augmentations,
     synonym_replace,
     back_translate,
