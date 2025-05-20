@@ -1,8 +1,6 @@
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import pandas as pd
 import torch
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
 import numpy as np
 
 from datasets import Dataset
@@ -16,6 +14,9 @@ from transformers.trainer_callback import TrainerCallback
 
 
 tqdm.pandas()
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 
 
 class PrintLRCallback(TrainerCallback):
@@ -34,7 +35,10 @@ def load_bert_model(model_name: str):
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
     return tokenizer, model
 
-tokenizer, model = load_bert_model("bert-base-uncased")
+
+model_name = "microsoft/deberta-v3-base" if device.type == "cuda" else "distilbert-base-uncased"
+print(f'running on {device.type} choosing model: {model_name}')
+tokenizer, model = load_bert_model(model_name)
 
 
 def preprocess_function(examples: dict[str, list[str]]) -> dict[str, list[int]]:
