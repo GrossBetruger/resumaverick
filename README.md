@@ -42,7 +42,7 @@ Resumaverick is a BERT-based resume classification tool that fine-tunes a pre-tr
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone <repo_url>
+   git clone https://github.com/GrossBetruger/resumaverick.git
    cd resumaverick
    ```
 2. (Optional) On Debian/Ubuntu systems, run the installer script:
