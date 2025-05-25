@@ -8,7 +8,7 @@ from transformers import Trainer, TrainingArguments
 from evaluate import load as load_metric
 from sklearn.model_selection import train_test_split
 from pathlib import Path
-from resumaverick.augmentation import (
+from augmentation import (
     apply_multiple_augmentations,
     synonym_replace,
     back_translate,
@@ -40,9 +40,10 @@ def load_bert_model(model_name: str):
     return tokenizer, model
 
 
-model_name = (
-    "microsoft/deberta-v3-base" if device.type == "cuda" else "distilbert-base-uncased"
-)
+# model_name = (
+#     "microsoft/deberta-v3-base" if device.type == "cuda" else "distilbert-base-uncased"
+# )
+model_name = "distilbert-base-uncased"
 print(f"running on {device.type} choosing model: {model_name}")
 tokenizer, model = load_bert_model(model_name)
 
