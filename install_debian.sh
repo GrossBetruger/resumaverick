@@ -68,11 +68,14 @@ install_poetry
 
 # 3. Project install steps
 cd "$ORIGINAL_DIR"
-"$HOME/.local/bin/poetry" install
+poetry install
 
 if [[ -x download_language_data.sh ]]; then
     sh download_language_data.sh
 else
     echo "download_language_data.sh not found or not executable."
 fi
+
+echo "run command: source ~/.bashrc" 
+echo "next run: ./train_bert.sh"
 
