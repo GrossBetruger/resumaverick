@@ -68,7 +68,7 @@ install_poetry
 
 # 3. Project install steps
 cd "$ORIGINAL_DIR"
-poetry install
+"$HOME/.local/bin/poetry" install
 
 if [[ -x download_language_data.sh ]]; then
     sh download_language_data.sh
